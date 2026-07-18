@@ -1,10 +1,40 @@
+import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import MessageInput from "../components/MessageInput.jsx";
 import ResultCard from "../components/ResultCard.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import { analyzeMessage } from "../services/api.js";
 
 function Home() {
-  const showResult = false;
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+
+  const showResult = result !== null;
+
+  const handleAnalyze = async (message) => {
+    if (!message || !message.trim()) {
+      setError("Please enter a message before analyzing.");
+      return;
+    }
+
+    setError("");
+    setResult(null);
+    setIsLoading(true);
+
+    try {
+      const analysis = await analyzeMessage(message.trim());
+      setResult(analysis);
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Something went wrong while analyzing the message. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0A0F0D] text-neutral-100">
@@ -52,22 +82,23 @@ function Home() {
         {/* Analyzer section */}
         <section className="border-t border-emerald-900/30 px-6 py-20">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-center text-2xl font-semibold tracking-tight text-neutral-100 sm:text-3xl">
-              AI Scam Analyzer
-            </h2>
+            <MessageInput onAnalyze={handleAnalyze} isLoading={isLoading} />
 
-            <p className="mx-auto mt-3 max-w-xl text-center text-sm text-neutral-400 sm:text-base">
-              Paste a suspicious WhatsApp message, SMS, email, or call
-              conversation for AI analysis.
-            </p>
+            {error && (
+              <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-red-400">
+                {error}
+              </p>
+            )}
 
-            <div className="mt-10">
-              <MessageInput />
-            </div>
-
-            {showResult && (
+            {isLoading && (
               <div className="mt-10">
-                <ResultCard />
+                <LoadingSpinner />
+              </div>
+            )}
+
+            {!isLoading && showResult && (
+              <div className="mt-10">
+                <ResultCard {...result} />
               </div>
             )}
           </div>

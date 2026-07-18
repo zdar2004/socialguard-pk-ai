@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const MAX_CHARACTERS = 3000;
 
-function MessageInput() {
+function MessageInput({ onAnalyze, isLoading }) {
   const [message, setMessage] = useState("");
 
   const characterCount = message.length;
@@ -13,6 +13,13 @@ function MessageInput() {
     if (value.length <= MAX_CHARACTERS) {
       setMessage(value);
     }
+  };
+
+  const handleAnalyzeClick = () => {
+    if (isEmpty || isLoading) {
+      return;
+    }
+    onAnalyze(message.trim());
   };
 
   return (
@@ -32,7 +39,8 @@ function MessageInput() {
         maxLength={MAX_CHARACTERS}
         placeholder="Paste the suspicious message here..."
         rows={8}
-        className="mt-8 w-full resize-y rounded-md border border-emerald-900/40 bg-[#0D1310] p-4 text-sm text-neutral-100 placeholder:text-neutral-500 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 sm:text-base"
+        disabled={isLoading}
+        className="mt-8 w-full resize-y rounded-md border border-emerald-900/40 bg-[#0D1310] p-4 text-sm text-neutral-100 placeholder:text-neutral-500 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60 sm:text-base"
       />
 
       <div className="mt-2 text-right font-mono text-xs text-neutral-500">
@@ -42,7 +50,8 @@ function MessageInput() {
       <div className="mt-6 flex justify-center">
         <button
           type="button"
-          disabled={isEmpty}
+          onClick={handleAnalyzeClick}
+          disabled={isEmpty || isLoading}
           className="rounded-md bg-emerald-500 px-8 py-3 text-sm font-semibold uppercase tracking-wide text-[#0A0F0D] shadow-[0_0_25px_-5px_rgba(52,211,153,0.6)] transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400 disabled:shadow-none disabled:hover:bg-neutral-700"
         >
           Analyze Scam

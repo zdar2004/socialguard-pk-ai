@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 
 import google.generativeai as genai
 
@@ -38,9 +39,37 @@ def _get_model():
     )
 
 
+_CODE_FENCE_PATTERN = re.compile(
+    r"```(?:json)?\s*(?P<body>{.*?})\s*```", re.DOTALL | re.IGNORECASE
+)
+
+
+def _extract_json_candidate(raw_text: str) -> str:
+    """
+    Extract the most likely JSON object substring from raw_text, handling:
+    - plain JSON
+    - JSON wrapped inside ```json ... ``` or ``` ... ``` code fences
+    - JSON surrounded by extra leading/trailing text
+    """
+    text = raw_text.strip()
+
+    fence_match = _CODE_FENCE_PATTERN.search(text)
+    if fence_match:
+        return fence_match.group("body").strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start : end + 1].strip()
+
+    return text
+
+
 def _parse_response(raw_text: str) -> dict:
+    candidate = _extract_json_candidate(raw_text)
+
     try:
-        data = json.loads(raw_text)
+        data = json.loads(candidate)
     except json.JSONDecodeError as exc:
         raise GeminiServiceError("Gemini returned invalid JSON.") from exc
 
