@@ -14,7 +14,7 @@ https://socialguard-pk-ai.vercel.app
 
 **Backend API (Railway)**
 
-https://socialguard-pk-ai-production.up.railway.app
+https://socialguard-pk-ai-production.up.railway.app/docs
 
 ---
 
