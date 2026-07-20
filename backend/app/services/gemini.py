@@ -156,7 +156,9 @@ def analyze_message(message_text: str) -> dict:
         raise
     except Exception as exc:
         raise GeminiServiceError(f"Gemini request failed: {exc}") from exc
-
+    print("\n========== RAW GEMINI RESPONSE ==========")
+    print(raw_text)
+    print("=========================================\n")
     raw_text = getattr(response, "text", None)
     if not raw_text:
         raise GeminiServiceError("Gemini returned an empty response.")
