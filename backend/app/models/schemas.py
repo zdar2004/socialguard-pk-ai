@@ -11,6 +11,9 @@ class AnalyzeResponse(BaseModel):
     risk_level: str
     risk_score: int
     scam_type: str
+    confidence: int
+    language_detected: str
+    analysis_summary: str
     red_flags: list
     recommended_action: str
     safety_tip: str

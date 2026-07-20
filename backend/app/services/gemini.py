@@ -14,6 +14,9 @@ REQUIRED_KEYS = {
     "risk_level",
     "risk_score",
     "scam_type",
+    "confidence",
+    "language_detected",
+    "analysis_summary",
     "red_flags",
     "recommended_action",
     "safety_tip",
@@ -81,6 +84,50 @@ def _parse_response(raw_text: str) -> dict:
     return data
 
 
+MIN_CHARACTER_LENGTH = 15
+MIN_MEANINGFUL_WORDS = 3
+
+_WORD_PATTERN = re.compile(r"[^\s]+")
+
+INSUFFICIENT_CONTEXT_RESPONSE = {
+    "risk_level": "Insufficient Context",
+    "risk_score": 0,
+    "scam_type": "Unknown",
+    "confidence": 100,
+    "language_detected": "Unknown",
+    "analysis_summary": (
+        "The provided text is too short to determine whether it is a "
+        "legitimate message or a scam. Please paste the complete message "
+        "or conversation."
+    ),
+    "red_flags": [],
+    "recommended_action": "Provide the complete message or conversation for analysis.",
+    "safety_tip": "Scam detection works best with complete conversations rather than isolated words.",
+}
+
+
+def _has_sufficient_context(message_text: str) -> bool:
+    """
+    Decide whether message_text carries enough context to be worth
+    sending to Gemini for scam classification.
+
+    Rejects (returns False for) input that is too short in either
+    character length or meaningful word count, since isolated keywords
+    (e.g. "OTP", "Bank", "Link") are not reliable scam evidence on
+    their own.
+    """
+    stripped = message_text.strip()
+
+    if len(stripped) < MIN_CHARACTER_LENGTH:
+        return False
+
+    meaningful_words = _WORD_PATTERN.findall(stripped)
+    if len(meaningful_words) < MIN_MEANINGFUL_WORDS:
+        return False
+
+    return True
+
+
 def analyze_message(message_text: str) -> dict:
     """
     Send a suspicious message to Gemini and return a structured scam
@@ -98,6 +145,9 @@ def analyze_message(message_text: str) -> dict:
     """
     if not message_text or not message_text.strip():
         raise GeminiServiceError("message_text must not be empty.")
+
+    if not _has_sufficient_context(message_text):
+        return dict(INSUFFICIENT_CONTEXT_RESPONSE)
 
     try:
         model = _get_model()
